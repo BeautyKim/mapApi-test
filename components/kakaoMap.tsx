@@ -1,45 +1,35 @@
-import { useEffect, useState } from "react"
-import {Map, MapMarker} from "react-kakao-maps-sdk"
-import Search from "./Search";
+import React, { SetStateAction, useEffect, useState } from "react"
+import {Map, MapMarker, ZoomControl} from "react-kakao-maps-sdk"
+
 
 interface IPrev{
   center: {lat: number; lng: number}
   errMsg?: null | string
-  isLoading: boolean
+  isLoading?: boolean
+  isPanto?: boolean
 }
 
-const KakaoMap = () => {  
-
-  const [ search, setSearch ] = useState()
-  const [ handleSubmit, setHandleSubmit ] = useState()
-
-  useEffect(() => {
-
-  })
-
-
-  const positions = [
-    {
-      title: "꿈마루작은도서관",
-      latlng: { lat: 35.1856463556, lng: 128.9497024914 },
-    },
-    {
-      title: "도란도란작은도서관",
-      latlng: { lat: 35.10998668, lng: 128.9213699524 },
-    }
-  ]
-
-
+const KakaoMap: React.FC = () => {
+  // 지도 확대
+  const [ level, setLevel ] = useState<SetStateAction<number>>()
+  // 다른 위치
+  const [ position, setPosition ] = useState<IPrev>({
+    center: {
+       lat: 33.452613,
+       lng: 126.570888 },
+    isPanto: false,
+  })  
+  // 현재 위치
   const [ state, setState ] = useState<IPrev>({
     center: {
       lat: 33.450701,
       lng: 126.570667,
     },
+    isPanto: true,
     errMsg: null,
     isLoading: true,
   })
-
-  // 현재 위치
+  // 현재 위치를 받아오는 지오로케이션 함수
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -70,41 +60,42 @@ const KakaoMap = () => {
     }
   }, [])
 
-
-    return(
-      <>
-        <h1>카카오 지도 API 테스트</h1>
-        {/* 지도 화면 */}
-        <Search />
-        <Map
-          center={state.center}
-          style={{ width: "100%", height: "360px" }}
-          level={3} // 지도 확대 레벨
-        >
-           {/* 마커 표시 */}
-           {!state.isLoading && (
-              <MapMarker position={state.center}>
-                <div style={{ padding: "5px", color: "#000" }}>
-                  {state.errMsg ? state.errMsg : "내 위치"}
-                </div>
-              </MapMarker>
-          )}
-          {positions.map((position, index) => (
-          <MapMarker
-            key={`${position.title}-${position.latlng}`}
-            position={position.latlng} // 마커를 표시할 위치
-            image={{
-              src: "https://img.icons8.com/color/48/undefined/library-building.png", // 마커이미지의 주소입니다
-              size: {
-                width: 35,
-                height: 40
-              }, // 마커이미지의 크기입니다
-            }}
-            title={position.title} // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
-          />
-        ))}
-      </Map>
-    </>
-    )
+  return(
+  <>
+  {/* 지도 */}
+    <Map
+      center={state.center}
+      isPanto={state.isPanto}
+      style={{ width: '100%', height: '380px' }}
+      level={3}
+      onZoomChanged={(map) => setLevel(map.getLevel())} >
+        {!state.isLoading && (
+          <MapMarker position={state.center}>
+            <div style={{ padding: "5px", color: "#000" }}>
+              {state.errMsg ? state.errMsg : "내 위치"}
+            </div>
+          </MapMarker>
+      )}
+      
+      <div style={{display: "flex", gap: "10px",}}>
+        <button
+          onClick={() => 
+            setState({
+              center: { lat: state.center.lat, lng: state.center.lng },
+              isPanto: false,
+          })}>내 위치</button>
+        <button
+          onClick={() => 
+            setPosition({
+              center:{lat: 33.450701, lng: 126.570667},
+              isPanto: true,
+            })}>
+            다른 위치
+        </button>
+      </div>
+      <ZoomControl />
+    </Map>
+  </>
+  )
 }
 export default KakaoMap
